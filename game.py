@@ -12,9 +12,9 @@ class Game:
 
         pygame.display.set_caption("Corebound - Demo")
         self.screen = pygame.display.set_mode((640, 480))
-        self.display = pygame.Surface((320, 240))
+        self.display = pygame.Surface((320, 240)) #scaled display surface = notice its a half of screen size
 
-        self.clock = pygame.time.Clock()
+        self.clock = pygame.time.Clock() #frame rate controller -> limits fps to 60
 
         self.movement = [False, False]
 
@@ -24,19 +24,26 @@ class Game:
             "large_decor": load_images("tiles/large_decor"),
             "stone": load_images("tiles/stone"),
             "player": load_image("entities/player.png"),
+            "background": load_image("background.png")
         }
 
         self.player = PhysicsEntity(self, "player", (50, 50), (8, 15))
         self.tilemap = Tilemap(self, tile_size=16)
+        self.scroll = [0, 0] #scroll offset for camera movement = theres no cake/camera (everythng else moves around player)
 
     def run(self):
         while True:
-            self.display.fill((27, 117, 51))
+            self.display.blit(self.assets["background"], (0, 0))
 
-            self.tilemap.render(self.display)
+            self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.scroll[0]) // 30
+            self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) // 30 #slow and nice camera movement towards player
+            
+            render_scroll = (int(self.scroll[0]), int(self.scroll[1])) #convert to integer for pixel perfect rendering //important for pixel art games
+
+            self.tilemap.render(self.display, offset=self.scroll)
 
             self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
-            self.player.render(self.display)
+            self.player.render(self.display, offset=self.scroll)
 
 
             for event in pygame.event.get():
@@ -48,6 +55,8 @@ class Game:
                         self.movement[0] = True
                     if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                         self.movement[1] = True
+                    if event.key == pygame.K_UP or event.key == pygame.K_w:
+                            self.player.velocity[1] = -3.15 # jump floatiness
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                         self.movement[0] = False
