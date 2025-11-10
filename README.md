@@ -1,24 +1,32 @@
-Haluzová - Projekt
+# Haluzová – Projekt
 
-1. nápad:
-   Název projektu: Slime jumper Krátký popis: Chtěla bych vytvořit platformovou hru s cílem se dostat co nejvys bez spadnuti dolu. Hra na still Jump King.
-   Klíčové cíle/funkce:
-     -kolize se stenami a mozne odrazeni od nich
-     -charge-up jump funkce
-     -pohybujíce nepřátelé nebo prekažky
+## 1. Původní nápad
+**Název projektu:** *Slime Jumper*  
+**Krátký popis:** Platformová hra, ve které je cílem dostat se co nejvýš bez pádu dolů. Stylově podobná hře **Jump King**.
 
-2. úprava conceptu (03.11.2025)
-   Název: Corebound
-   Concept: 2D mini metroidvania s inspiracemi jako Hollow Knight, Celeste a Dead Cells
-   Inspirace se týkají art stylu, pohybu, map/level designu a herních mechanik.
+### Klíčové cíle / funkce:
+- kolize se stěnami a možnost odražení od nich
+- "charge-up jump" mechanika (držím skok → vyšší skok)
+- pohybující se nepřátelé nebo překážky
 
-    To-Do:
-   -obtainable dovednosti (obtainable skills)
-   -variace nepřátel
-   -různé druhy útočení
-   -killyony + pohzybující kilzony
-   
-    Optional:
-   -hook mechanika
-   -UI
-   -boss-type nepritel
+---
+
+## 2. Úprava konceptu (03.11.2025)
+**Název:** *Corebound*  
+**Koncept:** 2D mini metroidvania inspirovaná hrami **Hollow Knight**, **Celeste** a **Dead Cells**.  
+Inspirace se projeví v:
+- art stylu
+- pohybových mechanikách
+- level / map designu
+- herních mechanikách a nepřátelích
+
+### To-Do:
+- získatelné dovednosti (*obtainable skills*)
+- variace nepřátel
+- různé druhy útoků
+- "kill zóny" + pohybující se kill zóny
+
+### Optional:
+- hook (lana / grappling) mechanika
+- UI rozhraní
+- boss-type nepřítel
