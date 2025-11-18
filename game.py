@@ -12,12 +12,12 @@ class Game:
         pygame.init()
 
         pygame.display.set_caption("Corebound - Demo")
-        self.screen = pygame.display.set_mode((640, 480))
+        self.screen = pygame.display.set_mode((640, 480)) #window size = actual screen size (width 640, height 480)
         self.display = pygame.Surface((320, 240)) #scaled display surface = notice its a half of screen size
 
         self.clock = pygame.time.Clock() #frame rate controller -> limits fps to 60
 
-        self.movement = [False, False]
+        self.movement = [False, False] #left, right movement states
 
         self.assets = {
             "decor": load_images("tiles/decor"),
@@ -39,17 +39,15 @@ class Game:
             self.display.blit(self.assets["background"], (0, 0))
 
             self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.scroll[0]) // 30
-            self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) // 30 #slow and nice camera movement towards player
-            
-            self.clouds.update()
-            self.clouds.render(self.display, offset=self.scroll)
-
+            self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) // 30 #slow and nice camera movement towards player  
             render_scroll = (int(self.scroll[0]), int(self.scroll[1])) #convert to integer for pixel perfect rendering //important for pixel art games
 
-            self.tilemap.render(self.display, offset=self.scroll)
+            self.clouds.update()
+            self.clouds.render(self.display, offset=render_scroll)
+            self.tilemap.render(self.display, offset=render_scroll)
 
             self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
-            self.player.render(self.display, offset=self.scroll)
+            self.player.render(self.display, offset=render_scroll)
 
 
             for event in pygame.event.get():
