@@ -36,8 +36,9 @@ class Game:
 
 
         self.clouds = Clouds(self.assets["clouds"], count=16) #cloud entities
-        self.player = PlayerEntity(self, (50, 50), (8, 15)) #player entity
+        self.player = PlayerEntity(self, (50, 50), (8, 15)) #player entity #size of player hitbox (width 8, height 15), (50, 50) = starting position
         self.tilemap = Tilemap(self, tile_size=16) #tile size in pixels
+        self.tilemap.load("map.json")
         self.scroll = [0, 0] #scroll offset for camera movement = theres no cake/camera (everythng else moves around player)
 
     def run(self):

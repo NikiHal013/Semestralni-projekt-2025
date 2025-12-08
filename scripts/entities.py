@@ -79,7 +79,7 @@ class PlayerEntity(PhysicsEntity):
 
         self.air_time +=1 #time spent in air counter
         if self.collisions['down']:
-            self.air_time = 0
+            self.air_time = 0 
         if self.air_time > 4:
             self.set_action('jump')
         elif movement[0] != 0:                
