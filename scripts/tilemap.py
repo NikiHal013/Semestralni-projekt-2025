@@ -25,6 +25,26 @@ class Tilemap:
         self.tile_size = tile_size
         self.tilemap = {}
         self.offgrid_tiles = []
+
+    def extract (self, id_pairs, keep=False): #extract tiles matching given (type, variant) pairs
+        matches = []
+        for tile in self.offgrid_tiles:
+            if (tile['type'], tile['variant']) in id_pairs:
+                matches.append(tile.copy())
+                if not keep:
+                    self.offgrid_tiles.remove(tile) #remove tile from offgrid list
+    
+        for loc in self.tilemap:
+            tile = self.tilemap[loc]
+            if (tile['type'], tile['variant']) in id_pairs:
+                matches.append(tile.copy()) 
+                matches [-1]["pos"] = matches[-1]["pos"].copy() #store pixel position instead of tile coordinates #copy to avoid modifying original
+                matches [-1]["pos"][0] = matches[-1]["pos"][0] * self.tile_size
+                matches [-1]["pos"][1] = matches[-1]["pos"][1] * self.tile_size
+                if not keep:
+                    del self.tilemap[loc] #remove tile from tilemap
+        
+        return matches
     
     def tiles_around(self, pos):
         tiles = []
