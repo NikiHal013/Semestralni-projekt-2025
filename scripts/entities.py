@@ -14,6 +14,8 @@ class PhysicsEntity:
         self.flip = False #for horizontal flipping of sprite based on movement direction
         self.set_action ('idle')
 
+        self.last_movement = [0, 0] #store last movement for wall jump direction detection
+
     def rect(self): #return the rectangle representing the entity's position and size
         return pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
     
@@ -25,7 +27,7 @@ class PhysicsEntity:
     def update(self, tilemap, movement=(0, 0)): #movement is a tuple (horizontal_movement, vertical_movement)
         self.collisions = {'up': False, 'down': False, 'right': False, 'left': False}
         
-        frame_movement = (movement[0] + self.velocity[0], movement[1] + self.velocity[1]) # Apply velocity to movement
+        frame_movement = (movement[0] * 1.3 + self.velocity[0], movement[1] * 1.3 + self.velocity[1]) # Apply velocity to movement
         
         self.pos[0] += frame_movement[0]
         entity_rect = self.rect()
@@ -55,6 +57,8 @@ class PhysicsEntity:
             self.flip = False
         if movement[0] < 0:
             self.flip = True
+
+        self.last_movement = movement #store last movement for wall jump direction detection
         
         self.velocity[1] = min(5, self.velocity[1] + 0.1) # Gravity, limit falling speed (it chooses the smaller value between 5 and current velocity + 0.1)
         
@@ -71,6 +75,8 @@ class PlayerEntity(PhysicsEntity):
     def __init__(self, game, pos, size):
         super().__init__(game, "player", pos, size)
         self.air_time = 0 #time spent in air counter
+        self.jumps = 1 #number of jumps available (for double jump etc.)
+        self.wall_slide = False
 
 
     def update(self, tilemap, movement=(0, 0)):
@@ -80,9 +86,50 @@ class PlayerEntity(PhysicsEntity):
         self.air_time +=1 #time spent in air counter
         if self.collisions['down']:
             self.air_time = 0 
-        if self.air_time > 4:
-            self.set_action('jump')
-        elif movement[0] != 0:                
-            self.set_action('run')
+            self.jumps = 1 #reset jumps on ground
+
+        self.wall_slide = False #reset wall slide state
+        if (self.collisions['right'] or (self.collisions['left'] and self.air_time > 4)):
+            self.wall_slide = True
+            self.velocity[1] = min(self.velocity[1], 0.5) #limit falling speed during wall slide
+            if self.collisions['right']:
+                self.flip = False
+            elif self.collisions['left']:
+                self.flip = True
+            self.set_action('wall_slide')
         else:
-            self.set_action('idle')
+            self.wall_slide = False
+
+        if not self.wall_slide:
+            if self.air_time > 4:
+                self.set_action('jump')
+            elif movement[0] != 0:                
+                self.set_action('run')
+            else:
+                self.set_action('idle')
+
+        if self.velocity[0] > 0:
+            self.velocity[0] = max(0, self.velocity[0] - 0.1, 0) #friction when moving right
+        else:
+            self.velocity[0] = min(0, self.velocity[0] + 0.1, 0) #friction when moving left
+
+    def jump(self):
+        if self.wall_slide:
+            if self.flip and self.last_movement[0] < 0:  #jumping off left wall
+                self.velocity[0] = 2 #horizontal jump boost
+                self.velocity[1] = -2.7 #vertical jump strength
+                self.air_time = 5 #set air time to prevent jump animation from flickering
+                self.jumps = max(0, self.jumps - 1) #consume a jump
+                return True #jump successful -> for animation later on
+            
+            elif not self.flip and self.last_movement[0] > 0:  #jumping off right wall
+                self.velocity[0] = -2 #horizontal jump boost
+                self.velocity[1] = -2.7 #vertical jump strength
+                self.air_time = 5 #set air time to prevent jump animation from flickering
+                self.jumps = max(0, self.jumps - 1) #consume a jump
+                return True
+            
+        elif self.jumps:
+            self.velocity[1] = -3 #jump strength
+            self.jumps -= 1
+            self.air_time = 5 #set air time to prevent jump animation from flickering

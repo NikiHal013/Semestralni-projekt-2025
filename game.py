@@ -57,8 +57,8 @@ class Game:
         while True:
             self.display.blit(self.assets["background"], (0, 0))
 
-            self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.scroll[0]) // 30
-            self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) // 30 #slow and nice camera movement towards player  
+            self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.scroll[0]) // 20
+            self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) // 20 #slow and nice camera movement towards player  
             render_scroll = (int(self.scroll[0]), int(self.scroll[1])) #convert to integer for pixel perfect rendering //important for pixel art games
 
             for rect in self.leaf_spawners:
@@ -93,7 +93,7 @@ class Game:
                     if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                         self.movement[1] = True
                     if event.key == pygame.K_UP or event.key == pygame.K_w:
-                            self.player.velocity[1] = -3.15 # jump floatiness
+                            self.player.jump()
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                         self.movement[0] = False
