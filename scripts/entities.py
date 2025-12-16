@@ -1,4 +1,5 @@
-import pygame
+import pygame, math, random
+from scripts.particle import Particle
 
 class PhysicsEntity:
     def __init__(self, game, e_type, pos, size):
@@ -77,6 +78,7 @@ class PlayerEntity(PhysicsEntity):
         self.air_time = 0 #time spent in air counter
         self.jumps = 1 #number of jumps available (for double jump etc.)
         self.wall_slide = False
+        self.dashing = 0 #dashing state counter
 
 
     def update(self, tilemap, movement=(0, 0)):
@@ -108,10 +110,32 @@ class PlayerEntity(PhysicsEntity):
             else:
                 self.set_action('idle')
 
+        if self.dashing > 0:
+            self.dashing = max(0, self.dashing - 1) #decrease dashing state counter
+        if self.dashing < 0:
+            self.dashing = min(0, self.dashing + 1) #increase dashing recovery counter
+        if abs(self.dashing) > 50:
+            self.velocity[0] = abs(self.dashing) / self.dashing * 8 #maintain dash speed during dash
+            if abs(self.dashing) == 51:
+                self.velocity[0] *= 0.1 #initial strong deceleration after dash endsmax(0, self.dashing - 1)
+            pvelocity = [abs(self.dashing) / self.dashing * random.random() * 3, 0]
+            self.game.particles.append(Particle(self.game, "particle", self.rect().center, velocity=pvelocity, frame=random.randint(0, 7)))
+        if abs(self.dashing) in {60, 50}:
+            for i in range(20):
+                angle = random.random() * math.pi * 2
+                speed = random.random() * 0.5 + 0.5
+                pvelocity = [math.cos(angle)* speed, math.sin(angle)* speed]
+                self.game.particles.append(Particle(self.game, "particle", self.rect().center, velocity=pvelocity, frame=random.randint(0, 7))) #dash particles
+
         if self.velocity[0] > 0:
             self.velocity[0] = max(0, self.velocity[0] - 0.1, 0) #friction when moving right
         else:
             self.velocity[0] = min(0, self.velocity[0] + 0.1, 0) #friction when moving left
+
+    def render(self, surf, offset=(0, 0)):
+        if abs(self.dashing) <= 50:
+            super().render(surf, offset=offset)
+           
 
     def jump(self):
         if self.wall_slide:
@@ -133,3 +157,13 @@ class PlayerEntity(PhysicsEntity):
             self.velocity[1] = -3 #jump strength
             self.jumps -= 1
             self.air_time = 5 #set air time to prevent jump animation from flickering
+
+    def dash(self):
+        if not self.dashing:
+            if self.flip:
+                self.dashing = -60 #dash left
+                self.velocity[0] = -2.7
+            else:
+                self.dashing = 60 #dash right
+                self.velocity[0] = 2.7
+                   

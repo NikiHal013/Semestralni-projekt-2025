@@ -1,4 +1,4 @@
-class Patricle:
+class Particle:
     def __init__ (self, game, p_type, pos, velocity = [0, 0], frame= 0):
         self.game = game
         self.type = p_type
