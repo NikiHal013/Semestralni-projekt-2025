@@ -7,7 +7,7 @@ AUTOTILE_MAP = {
     tuple(sorted([(-1, 0), (0, 1)])): 2,
     tuple(sorted([(-1, 0), (0, -1), (0, 1)])): 3,
     tuple(sorted([(-1, 0), (0, -1)])): 4,
-    tuple(sorted([(1, 0), (0, -1), (1, 0)])): 5,
+    tuple(sorted([(-1, 0), (0, -1), (1, 0)])): 5,
     tuple(sorted([(1, 0), (0, -1)])): 6,
     tuple(sorted([(1, 0), (0, -1), (0, 1)])): 7,
     tuple(sorted([(1, 0), (-1, 0), (0, 1), (0, -1)])): 8,
@@ -26,23 +26,27 @@ class Tilemap:
         self.tilemap = {}
         self.offgrid_tiles = []
 
-    def extract (self, id_pairs, keep=False): #extract tiles matching given (type, variant) pairs
+    def extract(self, id_pairs, keep=False): #extract tiles matching given (type, variant) pairs
         matches = []
-        for tile in self.offgrid_tiles:
+        for tile in self.offgrid_tiles.copy():
             if (tile['type'], tile['variant']) in id_pairs:
                 matches.append(tile.copy())
                 if not keep:
                     self.offgrid_tiles.remove(tile) #remove tile from offgrid list
     
+        to_delete = []
         for loc in self.tilemap:
             tile = self.tilemap[loc]
             if (tile['type'], tile['variant']) in id_pairs:
                 matches.append(tile.copy()) 
                 matches [-1]["pos"] = matches[-1]["pos"].copy() #store pixel position instead of tile coordinates #copy to avoid modifying original
-                matches [-1]["pos"][0] = matches[-1]["pos"][0] * self.tile_size
-                matches [-1]["pos"][1] = matches[-1]["pos"][1] * self.tile_size
+                matches [-1]["pos"][0] *= self.tile_size
+                matches [-1]["pos"][1] *= self.tile_size
                 if not keep:
-                    del self.tilemap[loc] #remove tile from tilemap
+                    to_delete.append(loc)
+        
+        for loc in to_delete:
+            del self.tilemap[loc] #remove tile from tilemap
         
         return matches
     
@@ -68,6 +72,12 @@ class Tilemap:
         self.tilemap = map_data["tilemap"]
         self.tile_size = map_data["tile_size"]
         self.offgrid_tiles = map_data["offgrid"]
+
+    def solid_check(self, pos):
+        tile_loc = str(int(pos[0]//self.tile_size)) + ';' + str(int(pos[1]//self.tile_size)) #get tile coordinates
+        if tile_loc in self.tilemap:
+            if self.tilemap[tile_loc]['type'] in PHYSICS_TILES:
+                return self.tilemap[tile_loc]
     
     def physics_rects_around(self, pos):
         rects = []

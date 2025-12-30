@@ -22,17 +22,23 @@ class Editor:
             "grass": load_images("tiles/grass"),
             "large_decor": load_images("tiles/large_decor"),
             "stone": load_images("tiles/stone"),
+            "spawners": load_images("tiles/spawners"),
         }
 
         self.movement = [False, False, False, False] #left, right, up, down movement states
 
         self.tilemap = Tilemap(self, tile_size=16) #tile size in pixels
 
+        self.current_map_id = 3  # track current map id
+
         try:
-            self.tilemap.load("map.json")
+            self.load_level(self.current_map_id) #load default map
         except FileNotFoundError:
             pass
 
+    def load_level(self, map_id):
+        self.tilemap.load("data/maps/" + str(map_id) + ".json") #for now only one map
+        self.current_map_id = map_id
         self.scroll = [0, 0] 
 
         self.tile_list = list(self.assets)
@@ -126,7 +132,13 @@ class Editor:
                     if event.key == pygame.K_t:
                         self.tilemap.auto_tile()
                     if event.key == pygame.K_o:
-                        self.tilemap.save("map.json")
+                        self.tilemap.save("data/maps/" + str(self.current_map_id) + ".json")
+                    if event.key == pygame.K_1:
+                        self.load_level(0)
+                    if event.key == pygame.K_2:
+                        self.load_level(1)
+                    if event.key == pygame.K_3:
+                        self.load_level(2)
                     if event.key == pygame.K_LSHIFT:
                         self.shift = True
                 if event.type == pygame.KEYUP:
