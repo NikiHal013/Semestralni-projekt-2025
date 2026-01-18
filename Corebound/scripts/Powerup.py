@@ -9,7 +9,7 @@ class Powerup(PhysicsEntity):
         'wall_slide': (150, 100, 255),       # Purple
         'dash': (255, 150, 100),             # Orange
         'fighting_style': (255, 100, 100),   # Red
-        'life': (120, 220, 120),             # Green
+        'bonus_life': (120, 220, 120),       # Green
     }
 
     SPRITE_KEYS = {
@@ -17,7 +17,7 @@ class Powerup(PhysicsEntity):
         'wall_slide': 'powerup/movement',
         'dash': 'powerup/movement',
         'fighting_style': 'powerup/fighting',
-        'life': 'powerup/base',
+        'bonus_life': 'powerup/base',
     }
     
     def __init__(self, game, pos, skill_type):
@@ -118,8 +118,8 @@ class Powerup(PhysicsEntity):
         """Collect this powerup and unlock the associated skill."""
         if not self.collected:
             self.collected = True
-            if self.skill_type == 'life':
-                player.lives += 1
+            if self.skill_type == 'bonus_life':
+                player.lives = getattr(player, 'lives', 0) + 1
             else:
                 player.skill_manager.unlock_skill(self.skill_type)
 

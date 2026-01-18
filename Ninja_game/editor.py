@@ -10,7 +10,7 @@ class Editor:
     def __init__(self):
         pygame.init()
 
-        pygame.display.set_caption("Corebound - Editor")
+        pygame.display.set_caption("Ninja - Editor")
         self.screen = pygame.display.set_mode((640, 480)) #window size = actual screen size (width 640, height 480)
         self.display = pygame.Surface((320, 240)) #scaled display surface = notice its a half of screen size
 
@@ -28,18 +28,9 @@ class Editor:
         self.movement = [False, False, False, False] #left, right, up, down movement states
 
         self.tilemap = Tilemap(self, tile_size=16) #tile size in pixels
+        self.scroll = [0, 0]  #initial scroll position
 
-        self.current_map_id = 3  # track current map id
-
-        try:
-            self.load_level(self.current_map_id) #load default map
-        except FileNotFoundError:
-            pass
-
-    def load_level(self, map_id):
-        self.tilemap.load("beta/data/maps/" + str(map_id) + ".json") #for now only one map
-        self.current_map_id = map_id
-        self.scroll = [0, 0] 
+        self.current_map_id = 2  # track current map id
 
         self.tile_list = list(self.assets)
         self.tile_group = 0 #index of current tile group
@@ -49,6 +40,16 @@ class Editor:
         self.right_clicking = False #to track right mouse clicking state
         self.shift = False #to track shift key state
         self.ongrid = True #to track if placing on grid or offgrid
+
+        try:
+            self.load_level(self.current_map_id) #load default map
+        except FileNotFoundError:
+            pass
+
+    def load_level(self, map_id):
+        self.tilemap.load("Ninja_game/data/maps/" + str(map_id) + ".json") #for now only one map
+        self.current_map_id = map_id
+        self.scroll = [0, 0]
 
     def run(self):
         while True:
@@ -132,13 +133,15 @@ class Editor:
                     if event.key == pygame.K_t:
                         self.tilemap.auto_tile()
                     if event.key == pygame.K_o:
-                        self.tilemap.save("data/maps/" + str(self.current_map_id) + ".json")
+                        self.tilemap.save("Ninja_game/data/maps/" + str(self.current_map_id) + ".json")
                     if event.key == pygame.K_1:
                         self.load_level(0)
                     if event.key == pygame.K_2:
                         self.load_level(1)
                     if event.key == pygame.K_3:
                         self.load_level(2)
+                    if event.key == pygame.K_4:
+                        self.load_level(3)
                     if event.key == pygame.K_LSHIFT:
                         self.shift = True
                 if event.type == pygame.KEYUP:

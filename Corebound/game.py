@@ -29,7 +29,6 @@ class Game:
         self.font = pygame.font.Font(None, 24)
 
         self.assets = {
-            'swamp': load_images('tiles/swamp'),
             'rocky_tiles': load_images('tiles/rocky_tiles'),
             'player': load_image('entities/player.png'),
             'player/idle': Animation(load_images('entities/player/idle'), img_dur=8),
@@ -42,6 +41,16 @@ class Game:
             'rock_piles': load_images('tiles/rock_piles'),
             'signs': load_images('tiles/signs'),
             'rocks': load_images('tiles/rocks'),
+            'grassy_tiles': load_images('tiles/grassy_tiles'),
+            'rocky_decor': load_images('tiles/rocky_decor'),
+            'swing_tiles': load_images('tiles/swing_tile'),
+            'grassy_decor': load_images('tiles/grassy_decor'),
+            'rope': load_images('tiles/rope'),
+            'mush_trees': load_images('tiles/mush_tree'),
+            'water_tiles': load_images('tiles/water_tiles'),
+            'pole_tiles': load_images('tiles/pole_tile'),
+            'rocky_platform': load_images('tiles/rocky_platform'),
+
             # Powerup sprites
             'powerup/base': load_image('power-ups/power-up.png'),
             'powerup/movement': load_image('power-ups/power-up_movement.png'),
@@ -65,6 +74,9 @@ class Game:
             'skill/wall_slide': load_image('text/wall_slide.png'),
             'skill/dash': load_image('text/dash.png'),
             'skill/fighting_style': load_image('text/fighting_style.png'),
+            'skill/bonus_life': load_image('text/bonus_life.png'),
+            # HUD sprites
+            'lives': load_image('lives.png'),
         }
 
         self.player = PlayerEntity.Player(self, (100, 100), pygame.Rect(self.assets['player'].get_rect()).size)
@@ -75,27 +87,41 @@ class Game:
         self.notifications = []  # List of notifications
         self.screenshake = 0  # Screen shake for impact effects
 
-        self.level = 2
+        self.level = 0
+        self.spawn_pos = (100, 100)  # Initialize spawn position
         self.debug = True  # Toggle debug hitboxes overlay
         self.load_level(self.level)
 
         self.bg_images=[]
         for i in range(1,4):
-            bg_image = load_image(f"backgrounds/BG_{i}.png")
-            # Scale background to fit the display surface
-            bg_scaled = pygame.transform.scale(bg_image, (int(self.display.get_width()), int(self.display.get_height())))
+            bg_image = load_image(f"backgrounds/lvl_1/BG_{i}.png")
+            # Scale background to be larger than the display surface
+            bg_scaled = pygame.transform.scale(bg_image, (int(self.display.get_width() * 1.5), int(self.display.get_height() * 1.5)))
             self.bg_images.append(bg_scaled)
         
         self.bg_width = self.bg_images[0].get_width()
+        
+        # Load stationary repeating background for level 2
+        try:
+            self.lvl2_bg = load_image("backgrounds/lvl_2/bg.png")
+            # Scale to match display height while maintaining aspect ratio
+            bg_height = self.display.get_height()
+            scale_factor = bg_height / self.lvl2_bg.get_height()
+            new_width = int(self.lvl2_bg.get_width() * scale_factor)
+            self.lvl2_bg = pygame.transform.scale(self.lvl2_bg, (new_width, bg_height))
+        except:
+            self.lvl2_bg = None
 
     def load_level(self, map_id):
         self.tilemap.load("Corebound/data/maps/" + str(map_id) + ".json")
+        self.level = map_id
 
         self.enemies = []
         self.powerups = []  # Reset powerups for new level
         for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1)]):
             if spawner['variant'] == 1:
                 self.player.pos = spawner['pos']
+                self.spawn_pos = spawner['pos']  # Store spawn position for reset
                 self.player.air_time = 0
             else:
                 self.enemies.append(MushroomEntity(self, spawner['pos'], (8, 15)))
@@ -106,7 +132,7 @@ class Game:
             1: 'wall_slide',
             2: 'dash',
             3: 'fighting_style',
-            4: 'life',
+            4: 'bonus_life',
         }
         for pu in self.tilemap.extract([('powerups', v) for v in powerup_map]):
             skill = powerup_map.get(pu['variant'])
@@ -120,8 +146,8 @@ class Game:
 
     def draw_bg(self, render_scroll):
         # Tile each layer horizontally and vertically with parallax
-        speed = 1.0
-        base_y_offset = -30  # Move background up by 30 pixels
+        speed = 0.2  # slower parallax base speed
+        base_y_offset = -50  # Move background up by 50 pixels
         for img in self.bg_images:
             # Compute wrapped offset for this parallax speed (horizontal)
             x = int((-(render_scroll[0] * speed)) % self.bg_width)
@@ -130,7 +156,21 @@ class Game:
             # Draw two copies to cover seam across the viewport
             self.display.blit(img, (x - self.bg_width, y))
             self.display.blit(img, (x, y))
-            speed += 0.2
+            speed += 0.1  # gentler layering increment
+    
+    def draw_lvl2_bg(self):
+        # Draw stationary repeating background for level 2 (not affected by scroll)
+        if self.lvl2_bg is None:
+            return
+        
+        bg_width = self.lvl2_bg.get_width()
+        display_width = self.display.get_width()
+        
+        # Tile the background horizontally to cover the entire display width
+        x = 0
+        while x < display_width:
+            self.display.blit(self.lvl2_bg, (x, 0))
+            x += bg_width
 
         #pygame.Rect(*self.img, self.img.get_size()) #player hitbox
         #self.clicking = False
@@ -143,7 +183,10 @@ class Game:
             self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) / 30
             render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
 
-            self.draw_bg(render_scroll)
+            if self.level == 0:
+                self.draw_bg(render_scroll)
+            elif self.level == 1:
+                self.draw_lvl2_bg()
             self.tilemap.render(self.display, offset=render_scroll)
 
             # Update enemies
@@ -169,9 +212,16 @@ class Game:
             self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
             self.player.render(self.display, offset=render_scroll)
 
-            # HUD: Player lives (top-left)
-            lives_text = self.font.render(f"Lives: {getattr(self.player, 'lives', 0)}", True, (255, 255, 255))
-            self.display.blit(lives_text, (6, 4))
+            # HUD: Player lives (top-left) - display sprite for each life
+            player_lives = getattr(self.player, 'lives', 0)
+            lives_sprite = self.assets.get('lives')
+            if lives_sprite:
+                for i in range(player_lives):
+                    self.display.blit(lives_sprite, (6 + i * (lives_sprite.get_width() + 2), 4))
+            else:
+                # Fallback to text if sprite not found
+                lives_text = self.font.render(f"Lives: {player_lives}", True, (255, 255, 255))
+                self.display.blit(lives_text, (6, 4))
             
             # Debug overlays
             if self.debug:
@@ -221,20 +271,6 @@ class Game:
                     pygame.quit()
                     sys.exit()
 
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:  #left click
-                         #self.clicking = True
-                        pass
-                    if event.button == 3:  #right click
-                         #self.right_clicking = True
-                        pass
-                if event.type == pygame.MOUSEBUTTONUP:
-                    if event.button == 1:  #left click
-                         #self.clicking = Falsed
-                        pass
-                    if event.button == 3:  #right click
-                         #self.right_clicking = False
-                        pass
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                         self.movement[0] = True
@@ -250,6 +286,10 @@ class Game:
                     if event.key == pygame.K_F3:
                         # Toggle debug overlay
                         self.debug = not self.debug
+                    if event.key == pygame.K_r:
+                        # Reset player to spawn
+                        self.player.pos = list(self.spawn_pos)
+                        self.player.air_time = 0
                     if event.key == pygame.K_ESCAPE:
                         pygame.quit()
                         sys.exit()

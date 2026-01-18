@@ -1,5 +1,4 @@
-import sys
-import pygame
+import sys, pygame
 
 
 def tint_image(img, color):
@@ -10,7 +9,7 @@ def tint_image(img, color):
     tinted.blit(overlay, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
     return tinted
 
-from scripts.utils import load_images
+from scripts.utils import load_image, load_images
 from scripts.tilemap import Tilemap
 
 RENDER_SCALE = 2.0  # Scaling factor for rendering
@@ -39,7 +38,7 @@ class Editor:
             tint_image(powerup_movement, (150, 100, 255)),   # wall slide
             tint_image(powerup_movement, (255, 180, 120)),   # dash
             powerup_fighting,                                # fighting style
-            tint_image(powerup_base, (120, 220, 120)),       # life
+            tint_image(powerup_base, (120, 220, 120)),       # bonus life
         ]
 
         self.powerup_labels = [
@@ -47,12 +46,16 @@ class Editor:
             "wall_slide",
             "dash",
             "fighting_style",
-            "life",
+            "bonus_life",
         ]
 
         self.assets = {
-            "swamp": load_images("tiles/swamp"),
             "rocky_tiles": load_images("tiles/rocky_tiles"),
+            "grassy_tiles": load_images("tiles/grassy_tiles"),
+            "swing_tiles": load_images("tiles/swing_tile"),
+            "water_tiles": load_images("tiles/water_tiles"),
+            "pole_tiles": load_images("tiles/pole_tile"),
+            "rocky_platform": load_images("tiles/rocky_platform"),
             'big_rock': load_images('tiles/big_rock'),
             'mushs': load_images('tiles/mushs'),
             'rock_piles': load_images('tiles/rock_piles'),
@@ -61,23 +64,44 @@ class Editor:
             'spawners': load_images('tiles/spawners'),
             # Powerup spawners (variants mapped to skills)
             'powerups': powerup_variants,
+            'rocky_decor': load_images('tiles/rocky_decor'),
+            'grassy_decor': load_images('tiles/grassy_decor'),
+            'rope': load_images('tiles/rope'),
+            'mush_trees': load_images('tiles/mush_tree'),
         }
 
         self.movement = [False, False, False, False] #left, right, up, down movement states
 
         self.tilemap = Tilemap(self, tile_size=16) #tile size in pixels
 
+        # Defaults so the editor can run even if no map file exists
         self.current_map_id = 2  # track current map id
+        self.scroll = [0, 0]  # default scroll so helpers work before a map is loaded
+        self.tile_list = list(self.assets)
+        self.tile_group = 0
+        self.tile_variant = 0
+        self.clicking = False
+        self.right_clicking = False
+        self.shift = False
+        self.ongrid = True
 
         try:
             self.load_level(self.current_map_id) #load default map
         except FileNotFoundError:
-            pass
+            # Keep defaults and an empty map if the file is missing
+            self.tilemap.tilemap = {}
+            self.tilemap.offgrid_tiles = []
 
     def load_level(self, map_id):
-        self.tilemap.load("data/maps/" + str(map_id) + ".json")
-        self.current_map_id = map_id
-        self.scroll = [0, 0] 
+        try:
+            self.tilemap.load("Corebound/data/maps/" + str(map_id) + ".json")
+            self.current_map_id = map_id
+        except FileNotFoundError:
+            # Gracefully fall back to an empty map if the file is missing
+            self.tilemap.tilemap = {}
+            self.tilemap.offgrid_tiles = []
+            self.current_map_id = map_id
+        self.scroll = [0, 0]
 
         self.tile_list = list(self.assets)
         self.tile_group = 0 #index of current tile group
@@ -90,6 +114,14 @@ class Editor:
 
     def run(self):
         while True:
+            # Ensure critical state exists even if a prior load failed
+            if not hasattr(self, "tile_list"):
+                self.tile_list = list(self.assets)
+                self.tile_group = 0
+                self.tile_variant = 0
+            if not hasattr(self, "scroll"):
+                self.scroll = [0, 0]
+
             self.display.fill((0, 0, 0))
 
             self.scroll[0] += (self.movement[1] - self.movement[0]) * 2 
@@ -99,17 +131,18 @@ class Editor:
 
             self.tilemap.render(self.display, offset=render_scroll)
 
-            current_tile_img = self.assets[self.tile_list[self.tile_group]][self.tile_variant] #get current tile image
-            current_tile_img.set_alpha(100) #set transparency for preview
+            current_tile_img = self.assets[self.tile_list[self.tile_group]][self.tile_variant]  # base tile image
+            preview_tile_img = current_tile_img.copy()  # keep base surface untouched for placed tiles
+            preview_tile_img.set_alpha(200)  # more visible preview
 
             mpos = pygame.mouse.get_pos()
             mpos = (mpos[0] // RENDER_SCALE, mpos[1] // RENDER_SCALE) #adjust mouse position for scroll and scale
             tile_pos = (int(mpos[0] + self.scroll[0]) // self.tilemap.tile_size, int(mpos[1] + self.scroll[1]) // self.tilemap.tile_size) #get tile coordinates under mouse
 
             if self.ongrid: #snap to grid if ongrid mode is active
-                self.display.blit(current_tile_img, (tile_pos[0] * self.tilemap.tile_size - render_scroll[0], tile_pos[1] * self.tilemap.tile_size - render_scroll[1])) #draw preview of current tile at mouse position
+                self.display.blit(preview_tile_img, (tile_pos[0] * self.tilemap.tile_size - render_scroll[0], tile_pos[1] * self.tilemap.tile_size - render_scroll[1])) #draw preview of current tile at mouse position
             else:
-                self.display.blit(current_tile_img, mpos) #draw preview of current tile at mouse position
+                self.display.blit(preview_tile_img, mpos) #draw preview of current tile at mouse position
 
 
             if self.clicking and self.ongrid: #place tile on left click
@@ -124,7 +157,7 @@ class Editor:
                     if tile_r.collidepoint(mpos):
                         self.tilemap.offgrid_tiles.remove(tile)
 
-            self.display.blit(current_tile_img, (5,5))
+            self.display.blit(preview_tile_img, (5,5))
             label_text = self.tile_list[self.tile_group]
             if label_text == 'powerups':
                 label_text += f" : {self.powerup_labels[self.tile_variant]} ({self.tile_variant})"
@@ -178,8 +211,10 @@ class Editor:
                         self.tilemap.auto_tile()
                     if event.key == pygame.K_f:
                         self.tilemap.fill_tiles("swamp", 0)
+                    if event.key == pygame.K_r:
+                        self.tilemap.randomize_tiles()
                     if event.key == pygame.K_o:
-                        self.tilemap.save("data/maps/" + str(self.current_map_id) + ".json")
+                        self.tilemap.save("Corebound/data/maps/" + str(self.current_map_id) + ".json")
                     if event.key == pygame.K_1:
                         self.load_level(0)
                     if event.key == pygame.K_2:

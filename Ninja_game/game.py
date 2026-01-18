@@ -44,6 +44,19 @@ class Game:
             "projectile": load_image("projectile.png"),
         }
 
+        self.sfx = {
+            "jump": pygame.mixer.Sound("Ninja_game/data/sfx/jump.wav"),
+            "dash": pygame.mixer.Sound("Ninja_game/data/sfx/dash.wav"),
+            "hit": pygame.mixer.Sound("Ninja_game/data/sfx/hit.wav"),
+            "shoot": pygame.mixer.Sound("Ninja_game/data/sfx/shoot.wav"),
+            "ambience": pygame.mixer.Sound("Ninja_game/data/sfx/ambience.wav"),
+        }
+
+        self.sfx["ambience"].set_volume(0.2)
+        self.sfx["shoot"].set_volume(0.4)
+        self.sfx["hit"].set_volume(0.8)
+        self.sfx["dash"].set_volume(0.3)
+        self.sfx["jump"].set_volume(0.7)
 
         self.clouds = Clouds(self.assets["clouds"], count=16) #cloud entities
 
@@ -80,6 +93,12 @@ class Game:
         self.transition = -30 #screen transition effect timer
 
     def run(self):
+        pygame.mixer.music.load("Ninja_game/data/music.wav")
+        pygame.mixer.music.set_volume(0.5)
+        pygame.mixer.music.play(-1)  #loop indefinitely
+
+        self.sfx["ambience"].play(-1)  #loop indefinitely
+
         while True:
             self.display.blit(self.assets["background"], (0, 0))
 
@@ -142,6 +161,7 @@ class Game:
                     if self.player.rect().collidepoint(projectile[0]):
                         self.projectiles.remove(projectile)
                         self.dead += 1
+                        self.sfx["hit"].play()
                         self.screenshake = max(16, self.screenshake) #increase screenshake on hit
                         for i in range(30):
                             angle = random.random() * math.pi * 2
@@ -175,7 +195,8 @@ class Game:
                     if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                         self.movement[1] = True
                     if event.key == pygame.K_UP or event.key == pygame.K_w:
-                            self.player.jump()
+                            if self.player.jump():
+                                self.sfx["jump"].play()
                     if event.key == pygame.K_LSHIFT or event.key == pygame.K_RSHIFT:
                         self.player.dash()
                     if event.key == pygame.K_ESCAPE:

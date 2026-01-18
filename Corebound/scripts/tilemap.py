@@ -48,14 +48,57 @@ AUTOTILE_MAP = {
     tuple(sorted([(0, -1), (1, -1), (-1, 0), (1, 0), (0, 1), (1, 1)])): 44,
     tuple(sorted([(0, -1), (-1, 0), (0, 1)])): 45,
     tuple(sorted([(0, -1), (-1, 0), (1, 0), (0, 1)])): 46,
+    # Additional neighbor patterns observed in maps that previously failed to auto-tile.
+    tuple(sorted([(-1, 1), (0, 1), (1, 0), (1, 1)])): 0,
+    tuple(sorted([(0, 1), (1, -1), (1, 0), (1, 1)])): 0,
+    tuple(sorted([(-1, -1), (-1, 0), (-1, 1), (0, -1), (1, -1), (1, 0)])): 0,
+    tuple(sorted([(-1, -1), (-1, 0), (0, -1), (1, -1)])): 0,
+    tuple(sorted([(-1, -1), (-1, 0), (0, -1), (1, -1), (1, 0), (1, 1)])): 0,
+    tuple(sorted([(-1, -1), (0, -1), (1, -1), (1, 0)])): 0,
+    tuple(sorted([(-1, 0), (-1, 1)])): 33,
+    tuple(sorted([(-1, 0), (-1, 1), (0, 1), (1, -1), (1, 0), (1, 1)])): 0,
+    tuple(sorted([(-1, 1), (0, -1), (0, 1)])): 0,
+    tuple(sorted([(1, 0), (1, 1)])): 0,
+    tuple(sorted([(-1, -1), (-1, 0), (-1, 1)])): 33,
+    tuple(sorted([(-1, -1), (-1, 0), (-1, 1), (0, -1)])): 22,
+    tuple(sorted([(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1)])): 12,
+    tuple(sorted([(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 1)])): 12,
+    tuple(sorted([(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, 1)])): 12,
+    tuple(sorted([(-1, -1), (-1, 0), (-1, 1), (0, -1), (1, -1)])): 22,
+    tuple(sorted([(-1, -1), (-1, 0), (-1, 1), (0, -1), (1, -1), (1, 0)])): 21,
+    tuple(sorted([(-1, -1), (-1, 0), (-1, 1), (0, -1), (1, -1), (1, 0), (1, 1)])): 21,
+    tuple(sorted([(-1, -1), (-1, 0), (-1, 1), (0, 1)])): 2,
+    tuple(sorted([(-1, -1), (-1, 0), (-1, 1), (0, 1), (1, 0), (1, 1)])): 1,
+    tuple(sorted([(-1, -1), (-1, 0), (-1, 1), (0, 1), (1, 1)])): 2,
+    tuple(sorted([(-1, -1), (-1, 0), (0, -1), (0, 1), (1, -1)])): 17,
+    tuple(sorted([(-1, -1), (-1, 0), (0, -1), (1, -1)])): 22,
+    tuple(sorted([(-1, -1), (-1, 0), (0, -1), (1, -1), (1, 0), (1, 1)])): 21,
+    tuple(sorted([(-1, -1), (-1, 0), (1, -1), (1, 0)])): 0,
+    tuple(sorted([(-1, -1), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)])): 10,
+    tuple(sorted([(-1, -1), (0, -1)])): 23,
+    tuple(sorted([(-1, -1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)])): 10,
+    tuple(sorted([(-1, -1), (0, -1), (1, -1), (1, 0)])): 20,
+    tuple(sorted([(-1, 0), (-1, 1), (0, 1), (1, -1), (1, 0), (1, 1)])): 1,
+    tuple(sorted([(-1, 0), (-1, 1), (0, 1), (1, 1)])): 2,
+    tuple(sorted([(-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)])): 10,
+    tuple(sorted([(-1, 1), (0, -1), (0, 1), (1, 0), (1, 1)])): 24,
+    tuple(sorted([(-1, 1), (0, 1), (1, -1), (1, 0), (1, 1)])): 0,
+    tuple(sorted([(-1, 1), (0, 1), (1, 0), (1, 1)])): 0,
+    tuple(sorted([(0, -1), (1, -1)])): 23,
+    tuple(sorted([(0, -1), (1, -1), (1, 0), (1, 1)])): 20,
+    tuple(sorted([(0, 1), (1, -1), (1, 0), (1, 1)])): 0,
+    tuple(sorted([(0, 1), (1, 1)])): 0,
+    tuple(sorted([(1, -1), (1, 0), (1, 1)])): 31,
 }
 
 NEIGHBOR_OFFSETS = [(-1, -1), (0, -1), (1, -1),
                      (-1, 0), (0, 0), (1, 0),
                      (-1, 1),  (0, 1),  (1, 1)] #relative positions of neighboring tiles (including self)
 
-PHYSICS_TILES = {"swamp", "rocky_tiles"}
-AUTOTILE_TILES = {"swamp", "rocky_tiles"}
+PHYSICS_TILES = {"rocky_tiles", "grassy_tiles", "swing_tiles", "pole_tiles", "rocky_platform"}
+AUTOTILE_TILES = {"rocky_tiles", "grassy_tiles", "water_tiles"}
+AUTOTILE_GROUPS = {"rocky_tiles": {"rocky_tiles", "grassy_tiles"}, "grassy_tiles": {"rocky_tiles", "grassy_tiles"}}  # tiles that autotile together
+RANDOMIZE_TILES = {"rocky_decor", "grassy_decor"}
 
 class Tilemap:
     def __init__(self, game, tile_size=16):
@@ -151,11 +194,49 @@ class Tilemap:
             for shift in [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]:
                 check_loc = str(tile['pos'][0] + shift[0]) + ';' + str(tile['pos'][1] + shift[1])
                 if check_loc in self.tilemap:
-                    if self.tilemap[check_loc]["type"] == tile["type"]:
+                    neighbor_type = self.tilemap[check_loc]["type"]
+                    # Check if tiles are compatible for autotiling
+                    if tile["type"] in AUTOTILE_GROUPS:
+                        if neighbor_type in AUTOTILE_GROUPS[tile["type"]]:
+                            neighbors.add(shift)
+                    elif neighbor_type == tile["type"]:
                         neighbors.add(shift)
             neighbors = tuple(sorted(neighbors))
-            if (tile["type"] in AUTOTILE_TILES) and (neighbors in AUTOTILE_MAP):
+            # Special handling for water tiles: variant 0 on top surface, variant 1 elsewhere
+            if tile["type"] == "water_tiles":
+                # Check if there's water above (north neighbor)
+                if (0, -1) not in neighbors:
+                    tile["variant"] = 0  # Top surface
+                else:
+                    tile["variant"] = 1  # Everywhere else
+            elif (tile["type"] in AUTOTILE_TILES) and (neighbors in AUTOTILE_MAP):
                 tile["variant"] = AUTOTILE_MAP[neighbors]
+
+    def randomize_tiles(self):
+        import random
+        for loc in self.tilemap:
+            tile = self.tilemap[loc]
+            if tile["type"] in RANDOMIZE_TILES:
+                tile["variant"] = random.randint(0, len(self.game.assets[tile["type"]]) - 1)
+
+    def fill_tiles(self, tile_type, variant=0, padding=1):
+        """Fill the currently visible grid (plus padding) with the given tile if empty.
+
+        This is intentionally conservative: it only places tiles where none exist
+        to avoid overwriting placed objects (spawners, powerups, etc.).
+        """
+        view_w, view_h = self.game.display.get_size()
+        tiles_x = view_w // self.tile_size + padding * 2
+        tiles_y = view_h // self.tile_size + padding * 2
+
+        start_x = int(self.game.scroll[0] // self.tile_size) - padding
+        start_y = int(self.game.scroll[1] // self.tile_size) - padding
+
+        for x in range(start_x, start_x + tiles_x):
+            for y in range(start_y, start_y + tiles_y):
+                loc = f"{x};{y}"
+                if loc not in self.tilemap:
+                    self.tilemap[loc] = {"type": tile_type, "variant": variant, "pos": [x, y]}
 
     def render(self, surf, offset=(0, 0)):
         for tile in self.offgrid_tiles:
