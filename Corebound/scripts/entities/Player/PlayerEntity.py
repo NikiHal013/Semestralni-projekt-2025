@@ -105,7 +105,6 @@ class Player(PhysicsEntity):
                 self.velocity[0] = 2.6
 
     def take_damage(self, amount=1):
-        """Reduce player lives and apply brief invulnerability and knockback."""
         if self.invulnerable:
             return False
         self.lives = max(0, self.lives - amount)
