@@ -43,6 +43,7 @@ class Menu:
     def __init__(self):
         self.font = self._load_pixel_font()
         self.title_font = self._load_title_font()
+        self.small_font = self._load_small_font()
         self.state = "main"  # main, settings, end, pause
         self.buttons = {}
         self.button_rects = {}
@@ -75,6 +76,10 @@ class Menu:
     def _load_title_font(self):
         """Load title font."""
         return pygame.font.SysFont("courier", 14, bold=True)
+    
+    def _load_small_font(self):
+        """Load small font for leaderboard results."""
+        return pygame.font.SysFont("courier", 8, bold=True)
     
     def _render_outlined_text(self, display, text, font, color, outline_color, x, y):
         """Draw text with black outline."""
@@ -124,7 +129,7 @@ class Menu:
     
     def setup_end_menu(self, width, height):
         center_x = width // 2
-        button_y = height // 2 + 120
+        button_y = height // 2 + 80
         
         self.buttons["end"] = [
             TextButton(center_x, button_y, "MAIN MENU", self.font, self.callbacks["back"])
@@ -139,7 +144,7 @@ class Menu:
         
         self.buttons["pause"] = [
             TextButton(center_x, button_y_start, "RESUME", self.font, self.callbacks["resume"]),
-            TextButton(center_x, button_y_start + button_spacing, "NEW RUN", self.font, self.callbacks["restart"]),
+            TextButton(center_x, button_y_start + button_spacing, "NEW RUN - PRESS R IN GAME", self.font, self.callbacks["restart"]),
             TextButton(center_x, button_y_start + button_spacing * 2, "MAIN MENU", self.font, self.callbacks["back"])
         ]
         self.selected_button_index = 0
@@ -195,7 +200,6 @@ class Menu:
         self.leaderboard_data = leaderboard_data
 
     def set_all_leaderboards(self, data_by_mode):
-        """Store leaderboards for all modes."""
         for key in self.leaderboard_data_by_mode.keys():
             self.leaderboard_data_by_mode[key] = data_by_mode.get(key, [])
     
@@ -240,7 +244,6 @@ class Menu:
             self.button_rects["main"].append(rect)
     
     def _render_settings_menu(self, display, width, height):
-        """Render settings menu."""
         display.fill((30, 30, 30))
         
         # Title
@@ -290,6 +293,18 @@ class Menu:
             rect = button.render(display)
             self.button_rects["end"].append(rect)
     
+    def _render_leaderboard(self, display, width, height, start_y):
+        """Render leaderboard columns for the end menu."""
+        column_centers = [width // 6, width // 2, width * 5 // 6]
+        modes = [
+            ("BABY MODE", "baby_mode", column_centers[0]),
+            ("NORMAL", "normal", column_centers[1]),
+            ("HARD", "hard", column_centers[2]),
+        ]
+        for title, key, cx in modes:
+            data = self.leaderboard_data_by_mode.get(key, [])
+            self._render_leaderboard_column(display, cx, start_y, title, data)
+    
     def _render_pause_menu(self, display, width, height):
         display.fill((30, 30, 30))
         
@@ -314,11 +329,11 @@ class Menu:
         for i, entry in enumerate(data[:8]):
             rank = i + 1
             time_str = entry.get("formatted_time", "00:00:000")
-            level = entry.get("level", 0)
-            text = f"{rank}. {time_str} - Lvl {level}"
-            text_surf = self.font.render(text, True, (200, 200, 200))
+            att = entry.get("att:", 0)
+            text = f"{rank}. {time_str} - {att}"
+            text_surf = self.small_font.render(text, True, (200, 200, 200))
             text_x = center_x - text_surf.get_width() // 2
-            self._render_outlined_text(display, text, self.font, (200, 200, 200), (0, 0, 0), text_x, y_offset)
+            self._render_outlined_text(display, text, self.small_font, (200, 200, 200), (0, 0, 0), text_x, y_offset)
             y_offset += 14
     
     def _format_time(self, time_ms):

@@ -157,7 +157,7 @@ class Game:
         self.menu.set_end_game_info(elapsed_time, 3)  # Show level 3 as completed
         
         # Add score to leaderboard with current difficulty
-        self.leaderboard.add_score(elapsed_time, 3, self.menu.difficulty)
+        self.leaderboard.add_score(elapsed_time, self.attempts + 1, self.menu.difficulty)
         self.refresh_all_leaderboards()
     
     def quit_game(self):
@@ -379,6 +379,13 @@ class Game:
                                 self.play_sfx("jump")
                         if event.key == pygame.K_LSHIFT or event.key == pygame.K_RSHIFT:
                             self.player.dash()
+                        if event.key == pygame.K_r:
+                            # Restart the current run
+                            self.level = 0
+                            self.attempts = 0
+                            self.level_deaths = 0
+                            self.total_game_time = pygame.time.get_ticks()
+                            self.load_level(self.level)
                         if event.key == pygame.K_ESCAPE:
                             self.pause_game()
                     if event.type == pygame.KEYUP:
@@ -394,7 +401,7 @@ class Game:
                     self.display.blit(transition_surf, (0, 0))
 
                 elapsed_time = pygame.time.get_ticks() - self.total_game_time
-                self.ui.render(self.display, self.attempts, elapsed_time, self.level + 1)
+                self.ui.render(self.display, self.attempts + 1, elapsed_time, self.level + 1)
             
             screenshake_offset = (random.random() * self.screenshake - self.screenshake / 2, random.random() * self.screenshake - self.screenshake / 2)
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), screenshake_offset)
