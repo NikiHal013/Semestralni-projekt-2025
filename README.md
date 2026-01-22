@@ -1,5 +1,3 @@
-# Haluzová – Projekt
-
 # Ninja Game 🥷
 
 2D platformová akční hra vytvořená v Pygame s důrazem na rychlý pohyb, přesné skákání a eliminaci nepřátel.
